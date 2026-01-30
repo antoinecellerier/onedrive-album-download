@@ -180,21 +180,33 @@ Your authentication is cached in `.token_cache.json` and will be reused for futu
 ```
 onedrive-album-download/
 ├── README.md                     # This file
+├── LICENSE                       # GPL-3.0 license
 ├── requirements.txt              # Python dependencies
+├── .gitignore                    # Git ignore rules
 ├── config.json.example           # Example OAuth configuration
-├── config.json                   # Your OAuth config (create this)
-├── .token_cache.json             # Cached authentication tokens (auto-created)
-├── onedrive_downloader/
+├── config.json                   # Your OAuth config (create this, not in git)
+├── .token_cache.json             # Cached auth tokens (auto-created, not in git)
+├── onedrive_downloader/          # Main package
 │   ├── __init__.py
-│   ├── __main__.py              # Entry point
+│   ├── __main__.py              # Entry point: python -m onedrive_downloader
 │   ├── cli.py                   # Command-line interface
-│   ├── auth.py                  # OAuth authentication
+│   ├── auth.py                  # OAuth authentication with MSAL
 │   ├── api.py                   # Microsoft Graph API client
 │   ├── parser.py                # URL parsing and encoding
-│   ├── downloader.py            # Async image downloader
+│   ├── downloader.py            # Async concurrent image downloader
 │   ├── utils.py                 # Helper functions
 │   └── config.py                # Configuration constants
-└── downloads/                    # Downloaded images (default location)
+├── tests/                        # Test scripts
+│   ├── __init__.py
+│   ├── test_config.py.example   # Test URL configuration template
+│   ├── test_config.py           # Your test URLs (create this, not in git)
+│   ├── test_auth.py             # Test authentication
+│   ├── test_api.py              # Test API access
+│   ├── test_share_link.py       # Test share link access
+│   ├── test_shares_children.py  # Test children listing
+│   ├── test_list_children.py    # Test direct drive access
+│   └── test_full_auth.py        # Test full auth flow
+└── downloads/                    # Downloaded images (default, not in git)
 ```
 
 ## Troubleshooting
