@@ -2,11 +2,13 @@
 """Test full authentication flow."""
 
 import sys
+from pathlib import Path
 import json
 from msal import PublicClientApplication, SerializableTokenCache
 
-# Load config
-with open('config.json') as f:
+# Load config from parent directory
+config_path = Path(__file__).parent.parent / 'config.json'
+with open(config_path) as f:
     config = json.load(f)
 
 # Filter reserved scopes
