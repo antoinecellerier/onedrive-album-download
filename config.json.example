@@ -1,0 +1,7 @@
+{
+  "client_id": "YOUR_CLIENT_ID_HERE",
+  "client_secret": "YOUR_CLIENT_SECRET_HERE",
+  "authority": "https://login.microsoftonline.com/common",
+  "redirect_uri": "http://localhost:8080",
+  "scopes": ["Files.Read.All", "offline_access"]
+}

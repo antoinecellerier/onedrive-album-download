@@ -1,0 +1,15 @@
+"""
+Configuration for test scripts.
+
+Copy this file to test_config.py and fill in your own test URLs and IDs.
+test_config.py is ignored by git to keep your personal URLs private.
+"""
+
+# Your OneDrive test album URL (get from Share button)
+TEST_ALBUM_URL = "https://1drv.ms/a/c/YOUR_ID/YOUR_ALBUM_SHARE_LINK"
+
+# Your test drive ID (obtained from API response)
+TEST_DRIVE_ID = "YOUR_DRIVE_ID"
+
+# Your test item ID (obtained from API response)
+TEST_ITEM_ID = "YOUR_ITEM_ID"

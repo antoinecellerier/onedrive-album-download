@@ -1,0 +1,4 @@
+"""OneDrive Album Downloader - Download images from OneDrive albums using Microsoft Graph API."""
+
+__version__ = "0.1.0"
+__author__ = "OneDrive Album Downloader"
