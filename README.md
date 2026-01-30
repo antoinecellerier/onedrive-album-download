@@ -145,6 +145,67 @@ Don't download from subfolders:
 python -m onedrive_downloader "https://1drv.ms/a/c/YOUR_ALBUM_ID" --no-recursive
 ```
 
+## Example Output
+
+### First Download
+
+```
+$ python -m onedrive_downloader "https://1drv.ms/a/c/YOUR_ALBUM_ID" -c 5
+
+🔐 Authenticating with Microsoft...
+✓ Authentication successful
+
+📂 Accessing album...
+✓ Found album: Vacation Photos
+
+🔍 Finding images...
+✓ Found 247 image(s)
+
+⬇️  Downloading to: ./downloads/Vacation Photos
+Downloading: 100%|████████████████████| 247/247 [00:42<00:00,  5.8it/s]
+
+✅ Download complete!
+
+📊 Summary:
+   Total images: 247
+   Downloaded: 247
+   Skipped: 0
+   Failed: 0
+   Total size: 1.2 GB
+   Time: 42.5s
+   Speed: 28.9 MB/s
+```
+
+### Resuming (Skipping Existing Files)
+
+When you re-run the downloader, it automatically skips files that already exist:
+
+```
+$ python -m onedrive_downloader "https://1drv.ms/a/c/YOUR_ALBUM_ID" -c 5
+
+🔐 Authenticating with Microsoft...
+✓ Authentication successful
+
+📂 Accessing album...
+✓ Found album: Vacation Photos
+
+🔍 Finding images...
+✓ Found 247 image(s)
+
+⬇️  Downloading to: ./downloads/Vacation Photos
+Downloading: 100%|████████████████████| 247/247 [00:01<00:00, 198.3it/s]
+
+✅ Download complete!
+
+📊 Summary:
+   Total images: 247
+   Downloaded: 0
+   Skipped: 247 (already exist)
+   Failed: 0
+   Total size: 0 B
+   Time: 1.2s
+```
+
 ## First Run - Authentication
 
 On the first run, you'll be prompted to authenticate:
