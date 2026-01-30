@@ -269,7 +269,9 @@ Microsoft Graph API has rate limits. If you encounter throttling:
 
 ## License
 
-This project is open source and available for personal and educational use.
+This project is licensed under the GNU General Public License v3.0 - see the [LICENSE](LICENSE) file for details.
+
+This is free software: you are free to change and redistribute it. There is NO WARRANTY, to the extent permitted by law.
 
 ## Contributing
 
