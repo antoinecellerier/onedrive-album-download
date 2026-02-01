@@ -2,10 +2,12 @@
 
 import asyncio
 import sys
+import traceback
 from pathlib import Path
 import click
 from tqdm import tqdm
 
+from onedrive_downloader import __version__
 from onedrive_downloader.auth import OneDriveAuthenticator
 from onedrive_downloader.api import OneDriveAPIClient
 from onedrive_downloader.parser import parse_and_encode_url
@@ -18,6 +20,7 @@ from onedrive_downloader.config import (
 
 
 @click.command()
+@click.version_option(version=__version__, prog_name="onedrive-downloader")
 @click.argument('album_url')
 @click.option(
     '--output', '-o',
@@ -26,11 +29,13 @@ from onedrive_downloader.config import (
 )
 @click.option(
     '--concurrent', '-c',
+    type=int,
     default=DEFAULT_CONCURRENT_DOWNLOADS,
-    help=f'Concurrent downloads (default: {DEFAULT_CONCURRENT_DOWNLOADS})'
+    help=f'Concurrent downloads (default: {DEFAULT_CONCURRENT_DOWNLOADS}, try 15-20 for faster speeds)'
 )
 @click.option(
     '--retries', '-r',
+    type=int,
     default=DEFAULT_MAX_RETRIES,
     help=f'Max retries per image (default: {DEFAULT_MAX_RETRIES})'
 )
@@ -49,7 +54,12 @@ from onedrive_downloader.config import (
     is_flag=True,
     help='Don\'t recursively download from subfolders'
 )
-def main(album_url, output, concurrent, retries, config, verbose, no_recursive):
+@click.option(
+    '--dry-run', '-n',
+    is_flag=True,
+    help='Show what would be downloaded without downloading'
+)
+def main(album_url, output, concurrent, retries, config, verbose, no_recursive, dry_run):
     """
     Download all images from a OneDrive album.
 
@@ -66,6 +76,9 @@ def main(album_url, output, concurrent, retries, config, verbose, no_recursive):
 
         Verbose output:
         $ python -m onedrive_downloader "https://1drv.ms/a/c/YOUR_ALBUM_ID" -v
+
+        Dry run (preview only):
+        $ python -m onedrive_downloader "https://1drv.ms/a/c/YOUR_ALBUM_ID" --dry-run
     """
     try:
         # Step 1: Authenticate
@@ -84,7 +97,6 @@ def main(album_url, output, concurrent, retries, config, verbose, no_recursive):
         except Exception as e:
             click.echo(f"\n❌ Authentication failed: {str(e)}", err=True)
             if verbose:
-                import traceback
                 traceback.print_exc()
             sys.exit(1)
 
@@ -116,7 +128,6 @@ def main(album_url, output, concurrent, retries, config, verbose, no_recursive):
         except Exception as e:
             click.echo(f"\n❌ Failed to access album: {str(e)}", err=True)
             if verbose:
-                import traceback
                 traceback.print_exc()
             sys.exit(1)
 
@@ -133,7 +144,6 @@ def main(album_url, output, concurrent, retries, config, verbose, no_recursive):
         except Exception as e:
             click.echo(f"\n❌ Failed to enumerate images: {str(e)}", err=True)
             if verbose:
-                import traceback
                 traceback.print_exc()
             sys.exit(1)
 
@@ -143,10 +153,22 @@ def main(album_url, output, concurrent, retries, config, verbose, no_recursive):
 
         click.echo(f"✓ Found {len(image_items)} image(s)\n")
 
-        if verbose:
-            total_size = sum(size for _, _, size, _ in image_items)
-            from onedrive_downloader.utils import format_size
+        # Calculate total size
+        from onedrive_downloader.utils import format_size
+        total_size = sum(item.size for item in image_items)
+
+        if verbose or dry_run:
             click.echo(f"Total size: {format_size(total_size)}\n")
+
+        # Dry run: show what would be downloaded and exit
+        if dry_run:
+            output_path = Path(output) / album_name
+            click.echo(f"📁 Would download to: {output_path}\n")
+            click.echo("Files:")
+            for item in image_items:
+                click.echo(f"  • {item.filename} ({format_size(item.size)})")
+            click.echo(f"\n✓ Dry run complete. {len(image_items)} file(s), {format_size(total_size)} total.")
+            sys.exit(0)
 
         # Step 6: Download images
         output_path = Path(output) / album_name
@@ -174,7 +196,6 @@ def main(album_url, output, concurrent, retries, config, verbose, no_recursive):
             progress_bar.close()
             click.echo(f"\n❌ Download failed: {str(e)}", err=True)
             if verbose:
-                import traceback
                 traceback.print_exc()
             sys.exit(1)
         finally:
@@ -215,7 +236,6 @@ def main(album_url, output, concurrent, retries, config, verbose, no_recursive):
     except Exception as e:
         click.echo(f"\n❌ Unexpected error: {str(e)}", err=True)
         if verbose:
-            import traceback
             traceback.print_exc()
         sys.exit(1)
 

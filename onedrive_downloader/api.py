@@ -1,8 +1,9 @@
 """Microsoft Graph API client for OneDrive operations."""
 
 import requests
-from typing import List, Tuple, Dict, Any
+from typing import List, Dict, Any
 from onedrive_downloader.config import GRAPH_API_ENDPOINT, DEFAULT_TIMEOUT_SECONDS, USER_AGENT
+from onedrive_downloader.models import ImageItem
 from onedrive_downloader.utils import is_image_file
 
 
@@ -128,7 +129,7 @@ class OneDriveAPIClient:
 
         return all_items
 
-    def get_image_items(self, drive_id, item_id, recursive=True):
+    def get_image_items(self, drive_id: str, item_id: str, recursive: bool = True) -> List[ImageItem]:
         """
         Get all image items from a OneDrive folder/album.
 
@@ -138,13 +139,13 @@ class OneDriveAPIClient:
             recursive: If True, recursively search subfolders
 
         Returns:
-            List of tuples: (filename, download_url, file_size, mime_type)
+            List of ImageItem objects
 
         Raises:
             requests.HTTPError: If API requests fail
         """
         children = self.list_children(drive_id, item_id)
-        image_items = []
+        image_items: List[ImageItem] = []
 
         for item in children:
             # Check if it's a folder
@@ -163,15 +164,16 @@ class OneDriveAPIClient:
                 download_url = item.get('@microsoft.graph.downloadUrl')
 
                 if download_url:
-                    filename = item['name']
-                    file_size = item.get('size', 0)
-                    mime_type = item.get('file', {}).get('mimeType', 'image/jpeg')
-
-                    image_items.append((filename, download_url, file_size, mime_type))
+                    image_items.append(ImageItem(
+                        filename=item['name'],
+                        download_url=download_url,
+                        size=item.get('size', 0),
+                        mime_type=item.get('file', {}).get('mimeType', 'image/jpeg'),
+                    ))
 
         return image_items
 
-    def get_shared_album_images(self, encoded_sharing_url, recursive=False):
+    def get_shared_album_images(self, encoded_sharing_url: str, recursive: bool = False) -> List[ImageItem]:
         """
         Get all image items from a shared album using the Shares API.
 
@@ -180,16 +182,17 @@ class OneDriveAPIClient:
 
         Args:
             encoded_sharing_url: Encoded sharing URL (format: u!{base64url})
-            recursive: If True, recursively search subfolders (not yet implemented)
+            recursive: If True, recursively search subfolders (currently only
+                       top-level items are returned via Shares API)
 
         Returns:
-            List of tuples: (filename, download_url, file_size, mime_type)
+            List of ImageItem objects
 
         Raises:
             requests.HTTPError: If API requests fail
         """
         children = self.list_shared_children(encoded_sharing_url)
-        image_items = []
+        image_items: List[ImageItem] = []
 
         for item in children:
             # Check if it's an image file
@@ -198,11 +201,12 @@ class OneDriveAPIClient:
                 download_url = item.get('@microsoft.graph.downloadUrl')
 
                 if download_url:
-                    filename = item['name']
-                    file_size = item.get('size', 0)
-                    mime_type = item.get('file', {}).get('mimeType', 'image/jpeg')
-
-                    image_items.append((filename, download_url, file_size, mime_type))
+                    image_items.append(ImageItem(
+                        filename=item['name'],
+                        download_url=download_url,
+                        size=item.get('size', 0),
+                        mime_type=item.get('file', {}).get('mimeType', 'image/jpeg'),
+                    ))
 
         return image_items
 
@@ -280,11 +284,7 @@ def get_images_from_album(access_token, encoded_sharing_url):
     # Get album info
     album_info = client.get_album_info(encoded_sharing_url)
 
-    # Get all images
-    image_items = client.get_image_items(
-        album_info['drive_id'],
-        album_info['item_id'],
-        recursive=True
-    )
+    # Get all images via Shares API
+    image_items = client.get_shared_album_images(encoded_sharing_url)
 
     return album_info, image_items

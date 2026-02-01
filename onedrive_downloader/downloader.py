@@ -4,8 +4,14 @@ import asyncio
 import aiohttp
 import aiofiles
 from pathlib import Path
-from typing import List, Tuple
-from onedrive_downloader.config import DEFAULT_MAX_RETRIES, DEFAULT_TIMEOUT_SECONDS, USER_AGENT
+from typing import List, Callable, Optional
+from onedrive_downloader.config import (
+    DEFAULT_MAX_RETRIES,
+    DEFAULT_TIMEOUT_SECONDS,
+    DEFAULT_CHUNK_SIZE,
+    USER_AGENT,
+)
+from onedrive_downloader.models import ImageItem
 from onedrive_downloader.utils import sanitize_filename, format_size
 
 
@@ -94,7 +100,7 @@ class ImageDownloader:
                         # Stream download to file
                         total_size = 0
                         async with aiofiles.open(output_path, 'wb') as f:
-                            async for chunk in response.content.iter_chunked(8192):
+                            async for chunk in response.content.iter_chunked(DEFAULT_CHUNK_SIZE):
                                 await f.write(chunk)
                                 total_size += len(chunk)
 
@@ -153,12 +159,16 @@ class ImageDownloader:
             progress_callback(result)
         return result
 
-    async def download_all(self, image_items, progress_callback=None):
+    async def download_all(
+        self,
+        image_items: List[ImageItem],
+        progress_callback: Optional[Callable[['DownloadResult'], None]] = None
+    ) -> List['DownloadResult']:
         """
         Download all images concurrently.
 
         Args:
-            image_items: List of (filename, url, size, mime_type) tuples
+            image_items: List of ImageItem objects
             progress_callback: Optional callback(result) to call on each completion
 
         Returns:
@@ -176,11 +186,11 @@ class ImageDownloader:
 
             # Create download tasks
             tasks = []
-            for filename, url, size, mime_type in image_items:
+            for item in image_items:
                 task = self.download_image(
                     session,
-                    url,
-                    filename,
+                    item.download_url,
+                    item.filename,
                     semaphore,
                     progress_callback
                 )
@@ -228,17 +238,17 @@ class ImageDownloader:
 
 
 async def download_images(
-    image_items,
-    output_dir,
-    concurrent=5,
-    max_retries=DEFAULT_MAX_RETRIES,
-    progress_callback=None
-):
+    image_items: List[ImageItem],
+    output_dir: str,
+    concurrent: int = 5,
+    max_retries: int = DEFAULT_MAX_RETRIES,
+    progress_callback: Optional[Callable[[DownloadResult], None]] = None
+) -> List[DownloadResult]:
     """
     Convenience function to download images.
 
     Args:
-        image_items: List of (filename, url, size, mime_type) tuples
+        image_items: List of ImageItem objects
         output_dir: Directory to save images
         concurrent: Maximum concurrent downloads
         max_retries: Maximum retry attempts per image

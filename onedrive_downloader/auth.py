@@ -10,6 +10,9 @@ from onedrive_downloader.config import TOKEN_CACHE_FILE, OAUTH_SCOPES
 class OneDriveAuthenticator:
     """Handle OAuth 2.0 authentication for OneDrive/Microsoft Graph API."""
 
+    # MSAL handles these scopes automatically
+    _RESERVED_SCOPES = {'offline_access', 'openid', 'profile'}
+
     def __init__(self, config_path='config.json'):
         """
         Initialize the authenticator with OAuth configuration.
@@ -65,6 +68,10 @@ class OneDriveAuthenticator:
             with open(TOKEN_CACHE_FILE, 'w') as f:
                 f.write(self.cache.serialize())
 
+    def _get_filtered_scopes(self):
+        """Get scopes with reserved scopes filtered out (MSAL handles them automatically)."""
+        return [s for s in self.scopes if s not in self._RESERVED_SCOPES]
+
     def acquire_token_device_code(self):
         """
         Acquire access token using device code flow (user-friendly for CLI).
@@ -77,9 +84,7 @@ class OneDriveAuthenticator:
         Raises:
             Exception: If authentication fails
         """
-        # Filter out reserved scopes (MSAL handles these automatically)
-        reserved_scopes = {'offline_access', 'openid', 'profile'}
-        filtered_scopes = [s for s in self.scopes if s not in reserved_scopes]
+        filtered_scopes = self._get_filtered_scopes()
 
         # Initiate device flow
         flow = self.app.initiate_device_flow(scopes=filtered_scopes)
@@ -120,10 +125,7 @@ class OneDriveAuthenticator:
         Returns:
             Access token string if successful, None otherwise
         """
-        # Filter out reserved scopes (MSAL handles these automatically)
-        reserved_scopes = {'offline_access', 'openid', 'profile'}
-        filtered_scopes = [s for s in self.scopes if s not in reserved_scopes]
-
+        filtered_scopes = self._get_filtered_scopes()
         accounts = self.app.get_accounts()
 
         if accounts:

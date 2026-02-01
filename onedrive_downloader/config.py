@@ -1,13 +1,16 @@
 """Configuration constants for OneDrive Album Downloader."""
 
+from onedrive_downloader import __version__
+
 # Microsoft Graph API
 GRAPH_API_ENDPOINT = "https://graph.microsoft.com/v1.0"
 
 # Default settings
 DEFAULT_OUTPUT_DIR = "./downloads"
-DEFAULT_CONCURRENT_DOWNLOADS = 5
+DEFAULT_CONCURRENT_DOWNLOADS = 10
 DEFAULT_MAX_RETRIES = 3
-DEFAULT_TIMEOUT_SECONDS = 30
+DEFAULT_TIMEOUT_SECONDS = 60
+DEFAULT_CHUNK_SIZE = 65536  # 64KB - optimized for download speed
 
 # Token cache
 TOKEN_CACHE_FILE = ".token_cache.json"
@@ -40,7 +43,7 @@ SUPPORTED_IMAGE_EXTENSIONS = [
 ]
 
 # HTTP headers
-USER_AGENT = "OneDriveAlbumDownloader/0.1.0"
+USER_AGENT = f"OneDriveAlbumDownloader/{__version__}"
 
 # OAuth settings
 OAUTH_SCOPES = ["Files.Read.All", "offline_access"]
