@@ -6,9 +6,10 @@ Download all images from OneDrive public albums using the official Microsoft Gra
 
 - ✅ Uses official Microsoft Graph API (no web scraping)
 - ✅ OAuth 2.0 authentication with token caching
-- ✅ Concurrent downloads for fast performance
+- ✅ Fast concurrent downloads (60+ MB/s with optimal settings)
 - ✅ Automatic retry logic with exponential backoff
 - ✅ Progress bars and detailed statistics
+- ✅ Dry-run mode to preview downloads
 - ✅ Recursive folder support
 - ✅ Resumes interrupted downloads (skips existing files)
 - ✅ Cross-platform (Windows, macOS, Linux)
@@ -58,7 +59,7 @@ After registration, you'll see the application overview. Copy the **Application 
 6. Click **Add permissions**
 7. (Optional) Click **Grant admin consent** if you have admin rights
 
-Note: You don't need a client secret for device code flow, but you can add one if you want to use authorization code flow in the future.
+Note: You don't need a client secret for device code flow.
 
 ### Step 4: Create Configuration File
 
@@ -75,8 +76,6 @@ Note: You don't need a client secret for device code flow, but you can add one i
      "scopes": ["Files.Read.All", "offline_access"]
    }
    ```
-
-Note: The `client_secret` field is not needed for device code flow.
 
 ## Usage
 
@@ -110,11 +109,13 @@ python -m onedrive_downloader "https://1drv.ms/a/c/YOUR_ALBUM_ID"
 ```
 Options:
   -o, --output DIR          Output directory (default: ./downloads)
-  -c, --concurrent INT      Concurrent downloads (default: 5)
+  -c, --concurrent INT      Concurrent downloads (default: 10, try 15-20 for faster speeds)
   -r, --retries INT         Max retries per image (default: 3)
   --config PATH             OAuth config file (default: config.json)
   --no-recursive            Don't recursively download from subfolders
+  -n, --dry-run             Show what would be downloaded without downloading
   -v, --verbose             Verbose output
+  --version                 Show version and exit
   --help                    Show this message and exit
 ```
 
@@ -145,12 +146,22 @@ Don't download from subfolders:
 python -m onedrive_downloader "https://1drv.ms/a/c/YOUR_ALBUM_ID" --no-recursive
 ```
 
+Preview what would be downloaded (dry run):
+```bash
+python -m onedrive_downloader "https://1drv.ms/a/c/YOUR_ALBUM_ID" --dry-run
+```
+
+Maximize download speed:
+```bash
+python -m onedrive_downloader "https://1drv.ms/a/c/YOUR_ALBUM_ID" -c 20
+```
+
 ## Example Output
 
 ### First Download
 
 ```
-$ python -m onedrive_downloader "https://1drv.ms/a/c/YOUR_ALBUM_ID" -c 5
+$ python -m onedrive_downloader "https://1drv.ms/a/c/YOUR_ALBUM_ID"
 
 🔐 Authenticating with Microsoft...
 ✓ Authentication successful
@@ -243,6 +254,7 @@ onedrive-album-download/
 ├── README.md                     # This file
 ├── LICENSE                       # GPL-3.0 license
 ├── requirements.txt              # Python dependencies
+├── pytest.ini                    # Pytest configuration
 ├── .gitignore                    # Git ignore rules
 ├── config.json.example           # Example OAuth configuration
 ├── config.json                   # Your OAuth config (create this, not in git)
@@ -255,18 +267,17 @@ onedrive-album-download/
 │   ├── api.py                   # Microsoft Graph API client
 │   ├── parser.py                # URL parsing and encoding
 │   ├── downloader.py            # Async concurrent image downloader
+│   ├── models.py                # Data models (ImageItem)
 │   ├── utils.py                 # Helper functions
 │   └── config.py                # Configuration constants
-├── tests/                        # Test scripts
+├── tests/                        # Test suite
 │   ├── __init__.py
+│   ├── test_utils_unit.py       # Unit tests for utils module
+│   ├── test_parser_unit.py      # Unit tests for parser module
+│   ├── test_models_unit.py      # Unit tests for models module
 │   ├── test_config.py.example   # Test URL configuration template
 │   ├── test_config.py           # Your test URLs (create this, not in git)
-│   ├── test_auth.py             # Test authentication
-│   ├── test_api.py              # Test API access
-│   ├── test_share_link.py       # Test share link access
-│   ├── test_shares_children.py  # Test children listing
-│   ├── test_list_children.py    # Test direct drive access
-│   └── test_full_auth.py        # Test full auth flow
+│   └── test_*.py                # Integration test scripts
 └── downloads/                    # Downloaded images (default, not in git)
 ```
 
@@ -320,6 +331,13 @@ If you want to sign in with a different account:
 rm .token_cache.json
 ```
 
+## Performance Tips
+
+- **Increase concurrency** for faster downloads: `-c 15` or `-c 20`
+- Default concurrency is 10, which balances speed and API rate limits
+- On fast connections, `-c 20` can achieve 60+ MB/s download speeds
+- If you encounter rate limiting (HTTP 429), reduce concurrency with `-c 5`
+
 ## API Rate Limits
 
 Microsoft Graph API has rate limits. If you encounter throttling:
@@ -332,6 +350,21 @@ Microsoft Graph API has rate limits. If you encounter throttling:
 - Never share your `config.json` or `.token_cache.json` files
 - The `.gitignore` is configured to exclude these files from version control
 - The tool only requests read-only access to files (`Files.Read.All`)
+
+## Development
+
+### Running Tests
+
+```bash
+# Install dependencies
+pip install -r requirements.txt
+
+# Run all tests
+pytest
+
+# Run with verbose output
+pytest -v
+```
 
 ## API References
 
